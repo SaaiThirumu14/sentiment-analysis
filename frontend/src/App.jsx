@@ -5,33 +5,37 @@ function App() {
   const [result, setResult] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const analyzeSentiment = async () => {
-    if (!text.trim()) return;
-    
-    setIsAnalyzing(true);
-    
-    // Simulate API call with timeout
-    setTimeout(() => {
-      // Mock sentiment analysis
-      const words = text.toLowerCase().split(' ');
-      const positiveWords = ['good', 'great', 'amazing', 'wonderful', 'fantastic', 'excellent', 'love', 'happy', 'joy', 'beautiful', 'perfect', 'awesome', 'brilliant', 'superb'];
-      const negativeWords = ['bad', 'terrible', 'awful', 'hate', 'horrible', 'disgusting', 'sad', 'angry', 'disappointed', 'frustrated', 'annoying', 'worst', 'pathetic'];
-      
-      let score = 0;
-      words.forEach(word => {
-        if (positiveWords.includes(word)) score += 1;
-        if (negativeWords.includes(word)) score -= 1;
-      });
-      
-      let sentiment;
-      if (score > 0) sentiment = "Positive";
-      else if (score < 0) sentiment = "Negative";
-      else sentiment = "Neutral";
-      
-      setResult({ sentiment, score: (score / words.length * 100).toFixed(1) });
-      setIsAnalyzing(false);
-    }, 1500);
-  };
+ const analyzeSentiment = async () => {
+  if (!text.trim()) return;
+
+  setIsAnalyzing(true);
+
+  try {
+    // 🔗 Replace with your backend URL
+    const response = await fetch("https://sentiment-analysis-4j8a.onrender.com/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+
+    const data = await response.json();
+
+    // Example expected response: { sentiment: "Positive", confidence: 85 }
+    setResult({
+      sentiment: data.sentiment,
+      score: data.confidence, // keep % confidence from backend
+    });
+  } catch (error) {
+    console.error("Error analyzing sentiment:", error);
+    setResult({
+      sentiment: "Error",
+      score: 0,
+    });
+  } finally {
+    setIsAnalyzing(false);
+  }
+};
+
 
   const getEmoji = (sentiment) => {
     if (sentiment === "Positive") return "😊";
@@ -132,7 +136,6 @@ function App() {
               </p>
               <div className="flex items-center justify-center space-x-2">
                 <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
-                <p className="text-sm opacity-90">Confidence: {Math.abs(result.score)}%</p>
                 <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.5s'}}></div>
               </div>
             </div>
